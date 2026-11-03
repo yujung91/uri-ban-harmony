@@ -42,3 +42,14 @@
 Sites 스킬의 기존 사이트 워크플로를 사용해 소스를 동기화하고 빌드/패키징한 뒤 saved version을 배포합니다. 사이트가 공개 상태이므로 현재 audience를 확인하고 공개 사이트용 배포 작업을 사용합니다. GitHub 원격과 Sites 소스 원격은 별개이며, 어느 쪽에도 force push를 하지 않습니다.
 
 GitHub에 백업한 소스에는 운영 학급 데이터·학생 파일·환경변수 값이 없습니다. 운영 데이터는 기존 Sites의 D1/R2에 남아 있습니다.
+
+### GitHub clone에서 배포할 때의 Git 이력
+
+GitHub 저장소와 Sites 저장소는 같은 파일을 보관하지만 커밋 이력은 다릅니다. GitHub clone에서 Sites helper를 바로 열면 이력 불일치가 발생할 수 있습니다. 강제 push나 관계없는 이력 병합으로 우회하지 않습니다.
+
+1. 기존 `.openai/hosting.json`에서 project_id를 읽고 get_site 및 create_source_repository_write_credential을 호출합니다.
+2. 비어 있는 별도 작업 폴더에서 Sites source helper를 `archivePath` 없이 실행해 기존 운영 소스를 엽니다. 반환된 checkout_path/source 결과를 유지합니다.
+3. GitHub clone의 추적 중인 소스 파일을 Sites checkout에 반영합니다. `.git`, `node_modules`, `.wrangler`, `.sites-runtime`, `.dev.vars*`, `.env*`, 생성된 빌드 결과는 복사하지 않습니다. 원본 Sites hosting.json의 project_id와 현재 바인딩을 유지합니다. 삭제한 소스 파일이 있다면 해당 변경도 검토해 반영합니다.
+4. Sites checkout에서 필요한 의존성 설치와 검증·빌드를 진행합니다. DB 스키마가 바뀌었다면 새 마이그레이션을 추가합니다.
+5. 기존 opening source 결과와 같은 사이트의 credential로 패키징/소스 push를 수행한 뒤, 반환된 commit_sha/archive를 그대로 저장·배포합니다.
+6. GitHub 원본 폴더에는 기능 수정과 테스트 결과를 커밋·push합니다. Sites의 Git 메타데이터를 GitHub 폴더로 덮어쓰지 않습니다.

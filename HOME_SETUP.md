@@ -56,9 +56,11 @@ git push origin main
 
 GitHub는 소스 보관용이고, 실제 실행·DB·파일 저장은 기존 Sites에서 담당합니다. **GitHub에 push하는 것만으로 운영 사이트가 자동 배포되지는 않습니다.**
 
+GitHub와 Sites의 Git 이력은 별도입니다. 배포 담당 도구는 기존 Sites 소스를 별도 작업 폴더에 먼저 열고, GitHub의 수정 파일을 그 폴더로 옮겨 빌드·배포해야 합니다. `.git`, 로컬 비밀 환경설정, 로컬 DB, `node_modules`를 복사하거나 두 원격의 이력을 강제로 합치지 않습니다. 아래 요청 문구와 HANDOFF.md에 이 절차를 포함했습니다.
+
 기존 사이트를 관리하는 동일한 계정에서 이 프로젝트를 열고 다음과 같이 요청하면 됩니다.
 
-> 이 저장소의 변경을 기존 우리 반 하모니 Sites에 배포해줘. `.openai/hosting.json`의 project_id를 유지하고, 새 사이트를 만들거나 운영 학급 데이터를 초기화하지 마. 공개 접속 범위와 기존 DB·R2 파일을 유지해줘. 실행·검증 방법은 HOME_SETUP.md와 HANDOFF.md에 있어.
+> 이 저장소의 변경을 기존 우리 반 하모니 Sites에 배포해줘. GitHub와 Sites의 Git 이력이 다르므로 기존 Sites 소스를 별도 폴더에 먼저 열고 수정 파일을 옮겨 빌드·배포해줘. `.openai/hosting.json`의 project_id를 유지하고, 새 사이트를 만들거나 운영 학급 데이터를 초기화하지 마. 공개 접속 범위와 기존 DB·R2 파일을 유지해줘. 실행·검증 방법은 HOME_SETUP.md와 HANDOFF.md에 있어.
 
 배포 시 `.openai/hosting.json`을 유지해야 합니다. 이 앱은 D1/R2와 서버 권한 검사를 사용하므로 GitHub Pages 같은 정적 호스팅에 그대로 올리면 학급 기능이 작동하지 않습니다.
 
