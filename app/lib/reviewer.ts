@@ -71,7 +71,7 @@ export async function handleReviewer(req:Request,env:any){try{
   const b:any=await req.json(),key='review-login:'+await digest(req.headers.get('CF-Connecting-IP')||'local'),now=Date.now();
   const limit=await db.prepare('SELECT hits,reset FROM limits WHERE id=?').bind(key).first();if(limit&&limit.reset>now&&limit.hits>=10)return json({error:'로그인을 여러 번 시도했어요. 15분 후 다시 시도해 주세요.'},429);
   await db.prepare('INSERT INTO limits (id,hits,reset) VALUES (?,1,?) ON CONFLICT(id) DO UPDATE SET hits=CASE WHEN reset<? THEN 1 ELSE hits+1 END,reset=CASE WHEN reset<? THEN ? ELSE reset END').bind(key,now+900000,now,now,now+900000).run();
-  const [salt,hash]=String(env.REVIEW_PASSWORD_HASH).split(':');if(typeof b.password!=='string'||b.password.length>128||b.username!=='harmony-review'||!equal(await passwordHash(b.password,salt),hash))return json({error:'점검용 아이디와 비밀번호를 확인해 주세요.'},401);
+  const [salt,hash]=String(env.REVIEW_PASSWORD_HASH).split(':');if(typeof b.password!=='string'||b.password.length>128||b.username!==(env.REVIEW_USERNAME||'demo')||!equal(await passwordHash(b.password,salt),hash))return json({error:'점검용 아이디와 비밀번호를 확인해 주세요.'},401);
   await seed(db);await schoolExamples(db);await db.prepare('DELETE FROM limits WHERE id=?').bind(key).run();const issued=Date.now(),value=[issued,issued+86400000,random()].join('.');return json({classId:REVIEW_CLASS},200,cookie(value+'.'+await sign(value,env.REVIEW_SESSION_SECRET),86400));
  }
  if(path==='student'){
@@ -82,3 +82,4 @@ export async function handleReviewer(req:Request,env:any){try{
  }
  return json({error:'요청을 찾지 못했어요.'},404);
  }catch(e){console.error('Reviewer API failed');return json({error:'점검 작업실에 연결하지 못했어요. 다시 시도해 주세요.'},500)}}
+

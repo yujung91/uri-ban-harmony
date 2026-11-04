@@ -16,13 +16,13 @@ async function request(path,{body,headers={},status=200,withCookie=true}={}){con
 const p={name:'real',className:'real',topic:'real',total:2,end:'2099-12-31',modes:['text','draw','melody']};
 db.prepare('INSERT INTO classes (id,owner,code,project,created) VALUES (?,?,?,?,?)').run('real','real-owner','12345678',JSON.stringify(p),1);
 const realBefore=db.prepare('SELECT * FROM classes WHERE id=?').get('real');
-await request('reviewer/login',{body:{username:'harmony-review',password:'wrong'},status:401});
-await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'},headers:{Origin:'https://evil.test'},status:403});
-const logged=await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'}});cookie=logged.cookie.split(';')[0];assert.match(logged.cookie,/HttpOnly/);assert.match(logged.cookie,/SameSite=Strict/);assert.match(logged.cookie,/Secure/);
+await request('reviewer/login',{body:{username:'demo',password:'wrong'},status:401});
+await request('reviewer/login',{body:{username:'demo',password:'testing-password'},headers:{Origin:'https://evil.test'},status:403});
+const logged=await request('reviewer/login',{body:{username:'demo',password:'testing-password'}});cookie=logged.cookie.split(';')[0];assert.match(logged.cookie,/HttpOnly/);assert.match(logged.cookie,/SameSite=Strict/);assert.match(logged.cookie,/Secure/);
 let me=(await request('me')).data;assert.equal(me.reviewer,true);assert.deepEqual(me.classes.map(c=>c.id),[REVIEW_CLASS]);assert.equal(me.account,'점검용 교사');
 await request('creation/state?classId=real',{status:403});await request('action?classId=real',{body:{type:'settings',project:p},status:403});await request('reviewer/student',{body:{classId:'real',number:1},status:403});await request('reviewer/access',{body:{enabled:false},status:403});
 const state=(await request('creation/state?classId='+REVIEW_CLASS)).data;assert.equal(state.students.length,3);assert.equal(state.finalItems.length,2);assert.equal(state.reviewer,true);
-const before=db.prepare('SELECT COUNT(*) n FROM creation_drafts').get().n;await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'}});assert.equal(db.prepare('SELECT COUNT(*) n FROM creation_drafts').get().n,before,'login does not reset the demonstration');
+const before=db.prepare('SELECT COUNT(*) n FROM creation_drafts').get().n;await request('reviewer/login',{body:{username:'demo',password:'testing-password'}});assert.equal(db.prepare('SELECT COUNT(*) n FROM creation_drafts').get().n,before,'login does not reset the demonstration');
 const student=(await request('reviewer/student',{body:{classId:REVIEW_CLASS,number:3}})).data,h={'X-Classroom-Token':student.token};
 assert.equal((await request('creation/state?classId='+REVIEW_CLASS,{headers:h})).data.role,'student');await request('creation/credentials?classId='+REVIEW_CLASS,{body:{},headers:h,status:403});
 const created=(await request('creation/new?classId='+REVIEW_CLASS,{body:{},headers:h})).data;const changed={...created.data,writing:'점검하는 학생이 쓴 글'};
@@ -31,10 +31,11 @@ const issued=(await request('creation/credentials?classId='+REVIEW_CLASS,{body:{
 const numbered=(await request('creation/login',{body:{code:state.code,number:4,pin:issued[0].pin,confirm:true},withCookie:false})).data;assert.equal(numbered.number,4);
 const tampered=cookie;cookie=cookie.slice(0,-1)+(cookie.endsWith('0')?'1':'0');assert.equal((await request('me')).data.teacher,false);cookie=tampered;
 const logout=await request('reviewer/logout',{body:{}});assert.match(logout.cookie,/Max-Age=0/);
-await request('reviewer/access',{body:{enabled:false},headers:owner,withCookie:false});assert.equal((await request('me')).data.teacher,false);await request('creation/state?classId='+REVIEW_CLASS,{headers:h,status:403});await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'},status:403});
+await request('reviewer/access',{body:{enabled:false},headers:owner,withCookie:false});assert.equal((await request('me')).data.teacher,false);await request('creation/state?classId='+REVIEW_CLASS,{headers:h,status:403});await request('reviewer/login',{body:{username:'demo',password:'testing-password'},status:403});
 await request('reviewer/access',{body:{enabled:true},headers:owner,withCookie:false});assert.equal((await request('me')).data.teacher,false,'old cookies stay revoked after enabling');
-const fresh=await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'}});cookie=fresh.cookie.split(';')[0];assert.equal((await request('me')).data.teacher,true);
+const fresh=await request('reviewer/login',{body:{username:'demo',password:'testing-password'}});cookie=fresh.cookie.split(';')[0];assert.equal((await request('me')).data.teacher,true);
 const ownerMe=(await request('me',{headers:owner,withCookie:false})).data;assert.deepEqual(ownerMe.classes.map(c=>c.id),['real']);assert.equal(ownerMe.reviewerEnabled,true);
 assert.deepEqual(db.prepare('SELECT * FROM classes WHERE id=?').get('real'),realBefore,'real classroom unchanged');
-cookie='';for(let i=0;i<10;i++)await request('reviewer/login',{body:{username:'harmony-review',password:'wrong'},status:401});await request('reviewer/login',{body:{username:'harmony-review',password:'testing-password'},status:429});
+cookie='';for(let i=0;i<10;i++)await request('reviewer/login',{body:{username:'demo',password:'wrong'},status:401});await request('reviewer/login',{body:{username:'demo',password:'testing-password'},status:429});
 console.log('PASS: isolated reviewer login, signed HttpOnly cookie, CSRF/throttling, real-class denial, idempotent samples, student switch/autosave, PIN issuance/login, owner-only disable/revoke, preserved real data.');
+
