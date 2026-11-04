@@ -1,5 +1,8 @@
 # Vercel 이전 1단계
 
+후속 Supabase 코드·SQL 준비와 현재 설정 안내는 [SUPABASE_SETUP.md](SUPABASE_SETUP.md)를
+참고하세요. 아래 내용은 Supabase 환경변수가 없는 1단계 화면 확인 절차입니다.
+
 기존 Sites와 별개인 새 Vercel 프로젝트용입니다. `.openai/hosting.json`, 기존 D1/R2,
 운영 비밀변수와 학생 자료는 변경하거나 가져오지 않습니다.
 

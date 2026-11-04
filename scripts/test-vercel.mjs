@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 
 // Exercise a real production server; no DB credentials or existing student data.
-const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '4180'], { stdio: 'pipe' });
+const server = spawn(process.execPath, ['scripts/run-vercel.mjs', 'start', '--hostname', '127.0.0.1', '--port', '4180'], { stdio: 'pipe', env: { ...process.env, SUPABASE_DATABASE_URL: '', SUPABASE_SERVICE_ROLE_KEY: '', SUPABASE_ANON_KEY: '' } });
 let logs = '';
 server.stdout.on('data', chunk => { logs += chunk; });
 server.stderr.on('data', chunk => { logs += chunk; });
@@ -20,6 +20,7 @@ try {
   const html = await (await fetch(base)).text();
   assert.match(html, /우리 반 하모니/);
   assert.match(html, /Supabase 연결 후/);
+  assert.equal((await fetch(`${base}/signin-with-chatgpt`)).status, 503);
   for (const asset of ['app.js', 'online.js', 'music.js', 'studio.js', 'movie.js', 'creation.js', 'qrcode.js', 'classroom-updates.js', 'style.css', 'creation.css', 'assets/rule-atlas.png']) {
     const response = await fetch(`${base}/${asset}`);
     assert.equal(response.status, 200, asset);
