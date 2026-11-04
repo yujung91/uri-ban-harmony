@@ -1,7 +1,7 @@
 // Intentionally empty by default.
 // Add Drizzle tables here when the site actually needs a database.
 // See examples/d1/db/schema.ts for an opt-in example.
-import {sqliteTable, text, integer, primaryKey} from 'drizzle-orm/sqlite-core';
+import {sqliteTable, text, integer, primaryKey, uniqueIndex, index} from 'drizzle-orm/sqlite-core';
 export const classes = sqliteTable('classes', {id:text().primaryKey(),owner:text().notNull(),code:text().notNull().unique(),project:text().notNull(),stage:integer().notNull().default(0),version:integer().notNull().default(1),plays:integer().notNull().default(0),joinOpen:integer().notNull().default(1),created:integer().notNull(),movie:text()});
 export const members = sqliteTable('members', {id:text().primaryKey(),classId:text().notNull(),tokenHash:text().notNull().unique(),nickname:text().notNull(),created:integer().notNull()});
 export const rules = sqliteTable('rules', {id:text().primaryKey(),classId:text().notNull(),authorId:text().notNull(),text:text().notNull(),kind:text().notNull(),media:text(),status:text().notNull().default('pending'),emoji:text().notNull(),created:integer().notNull(),original:text(),edited:integer().notNull().default(0)});
@@ -13,3 +13,11 @@ export const media = sqliteTable('media', {id:text().primaryKey(),classId:text()
 export const limits = sqliteTable('limits', {id:text().primaryKey(),hits:integer().notNull(),reset:integer().notNull()});
 export const versions = sqliteTable('versions', {id:text().primaryKey(),classId:text().notNull(),version:integer().notNull(),snapshot:text().notNull(),created:integer().notNull()});
 export const revisions = sqliteTable('revisions',{id:text().primaryKey(),classId:text().notNull(),entity:text().notNull(),itemId:text().notNull(),snapshot:text().notNull(),created:integer().notNull()});
+// Numbered students are separate from legacy anonymous members: no automatic linking.
+export const students = sqliteTable('creation_students',{id:text().primaryKey(),classId:text().notNull(),number:integer().notNull(),salt:text().notNull(),pinHash:text().notNull(),authVersion:integer().notNull().default(1),created:integer().notNull()},t=>[uniqueIndex('creation_student_number').on(t.classId,t.number)]);
+export const studentSessions = sqliteTable('creation_sessions',{tokenHash:text().primaryKey(),studentId:text().notNull(),authVersion:integer().notNull(),expires:integer().notNull()});
+export const drafts = sqliteTable('creation_drafts',{id:text().primaryKey(),classId:text().notNull(),studentId:text().notNull(),data:text().notNull(),revision:integer().notNull().default(1),updated:integer().notNull(),deletedAt:integer()},t=>[index('creation_draft_student').on(t.classId,t.studentId)]);
+export const submissions = sqliteTable('creation_submissions',{draftId:text().primaryKey(),classId:text().notNull(),studentId:text().notNull(),data:text().notNull(),original:text().notNull(),revision:integer().notNull(),teacherData:text(),teacherRevision:integer().notNull().default(0),submitted:integer().notNull()});
+export const choices = sqliteTable('creation_choices',{classId:text().notNull(),studentId:text().notNull(),studentDraftId:text(),teacherDraftId:text(),teacherBlocked:integer().notNull().default(0),delegate:integer().notNull().default(0),position:integer().notNull()},t=>[primaryKey({columns:[t.classId,t.studentId]})]);
+export const creationFiles = sqliteTable('creation_files',{id:text().primaryKey(),classId:text().notNull(),studentId:text().notNull(),draftId:text().notNull(),objectKey:text().notNull(),created:integer().notNull()});
+export const creationHistory = sqliteTable('creation_history',{id:text().primaryKey(),classId:text().notNull(),draftId:text().notNull(),actor:text().notNull(),data:text().notNull(),created:integer().notNull()});

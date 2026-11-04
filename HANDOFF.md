@@ -2,11 +2,11 @@
 
 ## 운영 연결 유지
 
-- 현재 코드 기준: 음악 영상 업데이트(저장소 최초 전체 소스 저장 시점).
+- 현재 코드 기준: 2026-11-04 수업 후 개선. 최신 동작과 검증은 CLASSROOM_IMPROVEMENTS.md, 집 PC 요청문은 HOME_PC_PROMPT.md를 우선 읽습니다.
 - 기존 사이트 project_id: `.openai/hosting.json`을 그대로 사용합니다.
 - 서버: Sites Vinext/Cloudflare Workers. DB binding `DB`, 파일 binding `BUCKET`.
 - 사이트 접속 범위는 공개입니다. 학급 자료는 학생 개인 토큰 또는 소유 교사의 플랫폼 로그인으로 권한을 검사합니다.
-- `TEACHER_EMAIL`은 Sites에 비밀 환경변수로 이미 설정되어 있습니다. 값을 소스에 쓰거나 다른 계정으로 바꾸지 않습니다.
+- `TEACHER_EMAIL`은 Sites에 비밀 환경변수로 이미 설정되어 있습니다. 값을 소스에 쓰거나 다른 계정으로 바꾸지 않습니다. 일반 교사 로그인은 이 이메일 허용목록에 제한되지 않으며, 각 학급 owner로 권한을 분리합니다.
 - 새 사이트를 만들거나 운영 데이터베이스를 로컬 DB로 덮어쓰지 않습니다.
 
 ## 코드 위치

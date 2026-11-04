@@ -1,3 +1,7 @@
+# 우리 반 하모니 · 주제로 만드는 우리 반 노래
+
+최신 기능과 동작은 [CLASSROOM_IMPROVEMENTS.md](CLASSROOM_IMPROVEMENTS.md)를 확인하세요. 집 PC에서는 [HOME_PC_PROMPT.md](HOME_PC_PROMPT.md)의 요청문을 복사해 사용하세요. 아래 초기 버전 설명보다 최신 문서가 우선합니다.
+
 # 우리 반 하모니 · 그림과 4마디 작곡
 
 집 PC에서 이어서 작업하려면 [HOME_SETUP.md](HOME_SETUP.md)를 먼저 읽으세요. 개발 구조와 운영 연결 정보는 [HANDOFF.md](HANDOFF.md)에 정리했습니다.

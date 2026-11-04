@@ -6,7 +6,9 @@ const sql=new DatabaseSync(':memory:');
 for(const file of (await readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort())sql.exec(await readFile('drizzle/'+file,'utf8'));
 const wrap=(statement,args=[])=>({bind(...values){return wrap(statement,values)},async all(){return {results:sql.prepare(statement).all(...args)}},async first(){return sql.prepare(statement).get(...args)||null},async run(){return sql.prepare(statement).run(...args)}});
 const files=new Map();globalThis.__classroomEnv={DB:{prepare:s=>wrap(s),batch:async statements=>{sql.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sql.exec('COMMIT');return results}catch(e){sql.exec('ROLLBACK');throw e}}},BUCKET:{put:async(k,b)=>files.set(k,b),get:async k=>files.has(k)?{body:files.get(k)}:null,delete:async keys=>{for(const k of Array.isArray(keys)?keys:[keys])files.delete(k)}},TEACHER_EMAIL:'teacher@example.test'};
-const ts=(await readFile('app/lib/classroom.ts','utf8')).replace("import {env as bindings} from 'cloudflare:workers';","const bindings=globalThis.__classroomEnv;");
+const auth=await transform(await readFile('app/lib/reviewer.ts','utf8'),{loader:'ts',format:'esm'});
+const authUrl='data:text/javascript;base64,'+Buffer.from(auth.code).toString('base64');
+const ts=(await readFile('app/lib/classroom.ts','utf8')).replace("import {env as bindings} from 'cloudflare:workers';","const bindings=globalThis.__classroomEnv;").replace("from './reviewer'","from '"+authUrl+"'");
 const compiled=await transform(ts,{loader:'ts',format:'esm'});
 const {handle}=await import('data:text/javascript;base64,'+Buffer.from(compiled.code).toString('base64'));
 const owner={'oai-authenticated-user-id':'teacher-id','oai-authenticated-user-email':'teacher@example.test'};
@@ -15,6 +17,12 @@ const project={name:'테스트 학급',className:'테스트',total:24,end:'2099-
 await call('classes',{body:{project},status:403});
 const c=await call('classes',{headers:owner,body:{project}}),cid=c.classId;
 assert.match(c.code,/^\d{8}$/);
+const another={'oai-authenticated-user-id':'second-teacher','oai-authenticated-user-email':'another@example.test'};
+const otherClass=await call('classes',{headers:another,body:{project}});assert.notEqual(otherClass.classId,cid);
+assert.deepEqual((await call('me',{headers:another})).classes.map(c=>c.id),[otherClass.classId]);assert.equal((await call('me',{headers:another})).siteOwner,false);
+await call('state',{classId:cid,headers:another,status:403});await call('action',{classId:cid,headers:another,body:{type:'settings',project},status:403});
+await call('state',{classId:otherClass.classId,headers:owner,status:403});
+
 const a=await call('join',{body:{code:c.code}}),b=await call('join',{body:{code:c.code}});
 const ah={'X-Classroom-Token':a.token},bh={'X-Classroom-Token':b.token};
 assert.equal((await call('state',{classId:cid,headers:{...owner,...ah}})).role,'student','joining with a token explicitly chooses student role even in owner browser');
