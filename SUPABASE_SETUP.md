@@ -65,6 +65,11 @@
 사용합니다. 운영 전 계정/세션과 로그인 메일 설정도 점검하세요.
 `scripts/run-vercel.mjs`가 Next.js에만 로그인 경로 연결을 활성화하므로 기존
 Sites/Vinext의 플랫폼 로그인 경로는 재작성하지 않습니다.
+Vercel의 교사 버튼은 `/api/auth/login` 이메일/비밀번호 폼을 직접 엽니다.
+로그인 화면 표시 자체는 DB/Auth 연결을 요구하지 않습니다. 로그인 시
+`AUTH_CONFIG_INVALID`는 Supabase URL/인증 설정 형식,
+`AUTH_DATABASE_UNAVAILABLE`는 로그인 횟수 확인용 DB 연결 문제를 뜻합니다.
+오류 응답과 로그에는 실제 URL·비밀번호·키 값을 출력하지 않습니다.
 
 ## 로컬 검증
 

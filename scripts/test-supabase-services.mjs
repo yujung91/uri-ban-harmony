@@ -5,11 +5,20 @@ import { createAuth } from '../lib/supabase/auth.mjs';
 import { createStorage } from '../lib/supabase/storage.mjs';
 import { createTestDatabase } from './supabase-test-db.mjs';
 import { transform } from 'esbuild';
+import vm from 'node:vm';
 
 // Auth/Storage contracts are stubbed: never contact the user's Supabase project.
 const origin = 'https://harmony.test';
 const supabase = 'https://supabase.test';
 const user = { id: randomUUID(), email: 'teacher@example.test', email_confirmed_at: new Date().toISOString() };
+// Use the actual browser helper: only Vercel changes the generated login URLs.
+const helper = (await readFile('public/app.js','utf8')).split('const $=')[0];
+const markup='<a href="/signin-with-chatgpt?return_to=%2F">로그인</a><a href="/signout-with-chatgpt?return_to=%2F">로그아웃</a>';
+for(const runtime of [null,{content:'vercel'}]){
+ const context=vm.createContext({document:{querySelector:()=>runtime}});vm.runInContext(helper,context);
+ const result=vm.runInContext(`teacherAuthLinks(${JSON.stringify(markup)})`,context);
+ assert.equal(result,runtime?markup.replaceAll('/signin-with-chatgpt','/api/auth/login').replaceAll('/signout-with-chatgpt','/api/auth/logout'):markup);
+}
 const session = { access_token: randomUUID(), refresh_token: randomUUID(), expires_in: 3600 };
 const auth = createAuth({ url: supabase, anonKey: 'local-test-only', request: async (url, options) => {
   if (url.endsWith('/user')) return options.headers.Authorization === `Bearer ${session.access_token}` ? Response.json(user) : Response.json({}, { status: 401 });
@@ -21,6 +30,14 @@ assert.equal((await auth.prepareRequest(forged)).request.headers.get('oai-authen
 const login = new Request(origin + '/api/auth/login', { method: 'POST', headers: { Origin: origin }, body: new URLSearchParams({ email: user.email, password: randomUUID() }) });
 const response = await auth.handle(login);
 assert.equal(response.status, 303);
+const redirect=await auth.handle(new Request(origin+'/api/auth/login?return_to=%2F%3Fnewclass%3D1',{method:'POST',headers:{Origin:origin},body:new URLSearchParams({email:user.email,password:randomUUID()})}));
+assert.equal(redirect.headers.get('Location'),'/?newclass=1');
+const invalidConfig=createAuth({url:'invalid-project-url',anonKey:'local-test-only',request:()=>{throw Error('Network must not be used for a login GET');}});
+assert.equal((await invalidConfig.handle(new Request(origin+'/api/auth/login'))).status,200);
+const proxied=new Request('https://localhost/api/auth/login',{method:'POST',headers:{Host:'harmony.test',Origin:origin},body:new URLSearchParams({email:user.email,password:randomUUID()})});
+assert.equal((await auth.handle(proxied)).status,303,'same-origin login survives a Next internal hostname');
+const normalised=await auth.prepareRequest(new Request('https://localhost/api/classes',{method:'POST',headers:{Host:'harmony.test',Origin:origin},body:'{}'}));
+assert.equal(new URL(normalised.request.url).origin,origin);assert.equal(await normalised.request.text(),'{}');
 const setCookies = response.headers.getSetCookie();
 assert.equal(setCookies.length, 2);
 assert.ok(setCookies.every(cookie => cookie.includes('HttpOnly') && cookie.includes('Secure') && cookie.includes('SameSite=Lax')));

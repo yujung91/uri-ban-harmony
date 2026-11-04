@@ -32,7 +32,8 @@ function config() {
   return { url: url.replace(/\/$/, ''), anonKey: process.env.SUPABASE_ANON_KEY! };
 }
 function auth() {
-  return createAuth({ ...config(), rateLimit: async (request: Request) => {
+  // Rendering the login form must not parse URLs or contact Auth/PostgreSQL.
+  return createAuth({ url: process.env.SUPABASE_URL || '', anonKey: process.env.SUPABASE_ANON_KEY || '', rateLimit: async (request: Request) => {
     const key = 'teacher-login:' + (process.env.VERCEL === '1' ? request.headers.get('x-vercel-forwarded-for') || 'unknown' : 'local');
     const now = Date.now();
     const row = await db()!.prepare('INSERT INTO limits (id,hits,reset) VALUES (?,1,?) ON CONFLICT(id) DO UPDATE SET hits=CASE WHEN reset<? THEN 1 ELSE hits+1 END,reset=CASE WHEN reset<? THEN ? ELSE reset END RETURNING hits').bind(key, now + 900000, now, now, now + 900000).first();
