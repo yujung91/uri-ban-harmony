@@ -99,6 +99,16 @@ try {
   assert.equal((await db.prepare('SELECT owner FROM classes WHERE id=?').bind(classId).first()).owner, `supabase:${user.id}`);
   const denied = await api.POST(new Request(origin + '/api/creation/credentials?classId=' + classId, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }));
   assert.equal(denied.status, 403);
+  const sentinel=randomUUID(), logged=[];
+  const failingAuth=createAuth({url:supabase,anonKey:'local-test-only',rateLimit:async()=>{throw Object.assign(Error(sentinel),{code:'28P01',detail:sentinel});}});
+  const oldHandler=globalThis.__supabaseApiTest.handleAuth,oldLog=console.error;
+  globalThis.__supabaseApiTest.handleAuth=req=>failingAuth.handle(req);console.error=(...args)=>logged.push(args);
+  try{
+    const failed=await api.POST(new Request(origin+'/api/auth/login',{method:'POST',headers:{Origin:origin},body:new URLSearchParams({email:user.email,password:randomUUID()})}));
+    assert.equal(failed.status,503);
+    const failure=await failed.json();assert.equal(failure.code,'AUTH_DATABASE_UNAVAILABLE');assert.equal(failure.diagnostic,'DB_AUTH_FAILED');
+    assert.ok(!JSON.stringify([failure,logged]).includes(sentinel),'raw database errors must not enter response or logs');
+  }finally{console.error=oldLog;globalThis.__supabaseApiTest.handleAuth=oldHandler;}
   // Model only the bucket catalogue for local migration validation.
   await pg.exec('CREATE SCHEMA storage; CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean,file_size_limit bigint);');
   const sql = await readFile('supabase/migrations/0002_private_storage.sql', 'utf8');

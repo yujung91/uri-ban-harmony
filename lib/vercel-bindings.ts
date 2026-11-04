@@ -2,6 +2,7 @@ import postgres from 'postgres';
 import { createDatabase } from './supabase/database.mjs';
 import { createStorage } from './supabase/storage.mjs';
 import { createAuth } from './supabase/auth.mjs';
+import { connectionSettings } from './supabase/connection.mjs';
 
 // Substituted only in Next.js, never in the Sites/Vite runtime.
 let database: ReturnType<typeof createDatabase> | undefined;
@@ -11,11 +12,8 @@ function configured() {
 function db() {
   if (!configured()) return undefined;
   if (!database) {
-    const sql = postgres(process.env.SUPABASE_DATABASE_URL!, {
-      ssl: { rejectUnauthorized: true, ...(process.env.SUPABASE_DB_CA ? { ca: process.env.SUPABASE_DB_CA } : {}) },
-      prepare: false, max: 3, connect_timeout: 10, idle_timeout: 20,
-      connection: { statement_timeout: 15000 },
-    });
+    const settings = connectionSettings(process.env.SUPABASE_DATABASE_URL!, process.env.SUPABASE_DB_CA);
+    const sql = postgres(settings.url, settings.options);
     const wrap = (connection: typeof sql) => ({
       async query(text: string, parameters: unknown[]) {
         const rows = await connection.unsafe(text, parameters as postgres.ParameterOrJSON<never>[]);

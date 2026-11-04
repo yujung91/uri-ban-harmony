@@ -71,6 +71,31 @@ Vercel의 교사 버튼은 `/api/auth/login` 이메일/비밀번호 폼을 직�
 `AUTH_DATABASE_UNAVAILABLE`는 로그인 횟수 확인용 DB 연결 문제를 뜻합니다.
 오류 응답과 로그에는 실제 URL·비밀번호·키 값을 출력하지 않습니다.
 
+### 로그인 DB 연결 오류 확인
+
+`AUTH_DATABASE_UNAVAILABLE`는 교사 비밀번호를 Supabase Auth에 전달하기 전,
+`lib/vercel-bindings.ts`의 `auth().rateLimit`가 `harmony.limits`를 갱신하다 실패한 것입니다.
+새 응답의 `diagnostic`와 Vercel Runtime Logs의 같은 진단 코드만 확인하세요.
+원본 DB 오류/연결 문자열/파라미터는 응답이나 로그에 기록하지 않습니다.
+
+| diagnostic | 확인할 설정 |
+|---|---|
+| `DB_URL_INVALID` | Vercel `SUPABASE_DATABASE_URL`에 따옴표·줄바꿈·비밀번호 자리표시자가 없는지 확인 |
+| `DB_POOLER_USER_INVALID` | Supabase Connect → Transaction pooler의 사용자명 전체(`postgres.` 뒤 프로젝트 식별자 포함)를 그대로 사용 |
+| `DB_AUTH_FAILED` | 프로젝트 DB 비밀번호인지 확인. 교사 로그인 비밀번호/API 키가 아님. 비밀번호 부분만 URL 인코딩을 정확히 한 번 적용 |
+| `DB_TLS_UNTRUSTED` | Supabase Database Settings → SSL Configuration의 공식 CA를 `SUPABASE_DB_CA` 서버 Secret으로 등록. TLS 검증을 끄지 않음 |
+| `DB_DNS_FAILED`, `DB_NETWORK_UNREACHABLE`, `DB_CONNECTION_TIMEOUT` | Connect 화면의 pooler 호스트·6543 포트, 프로젝트 가동 상태, Supabase 네트워크 제한 확인 |
+| `DB_SCHEMA_MISSING`, `DB_PERMISSION_DENIED` | 연결 문자열이 SQL을 적용한 새 프로젝트를 가리키는지와 해당 DB 역할의 `harmony` 접근 권한 확인 |
+| `DB_STARTUP_UNSUPPORTED`, `DB_URL_OPTIONS_UNSUPPORTED` | Connect의 PostgreSQL 기본 연결 문자열 사용. 불필요한 드라이버 전용 옵션 제거 |
+
+연결 문자열 전체를 인코딩하지 마세요. 비밀번호 부분의 `@`, `:`, `/`, `?`, `#`, `%` 등은
+URL 구성요소 인코딩이 필요합니다. 이미 인코딩된 `%40` 등을 다시 인코딩하면 비밀번호가
+바뀝니다. 값을 채팅이나 공개 인코딩 사이트에 붙이지 말고 본인 기기의 도구를 사용하세요.
+TLS는 항상 인증서를 검증하며 Transaction pooler에서는 `prepare:false`를 유지합니다.
+`statement_timeout` 같은 추가 시작 파라미터는 보내지 않고, 알려진 클라이언트 연결
+힌트도 PostgreSQL 시작 메시지에 전달하지 않습니다. Vercel 환경변수 변경 후에는
+Production 재배포가 필요합니다. 원격 연결 성공 여부는 배포 후 다시 검사해야 합니다.
+
 ## 로컬 검증
 
 ```sh

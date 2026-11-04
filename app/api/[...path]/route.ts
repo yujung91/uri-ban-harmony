@@ -6,8 +6,9 @@ export const dynamic='force-dynamic';
 function authFailure(error:any){
  const code=['AUTH_CONFIG_INVALID','AUTH_DATABASE_UNAVAILABLE'].includes(error?.code)?error.code:'AUTH_SERVICE_UNAVAILABLE';
  const message=code==='AUTH_CONFIG_INVALID'?'Supabase URL과 인증 키의 설정 형식을 확인해 주세요.':code==='AUTH_DATABASE_UNAVAILABLE'?'로그인 확인용 데이터베이스에 연결하지 못했어요.':'인증 서비스에 연결하지 못했어요.';
- console.error('Teacher authentication failed:',code);
- return Response.json({error:message,code},{status:503,headers:{'Cache-Control':'no-store'}});
+ const diagnostic=code==='AUTH_DATABASE_UNAVAILABLE'&&/^DB_(URL_INVALID|POOLER_USER_INVALID|URL_OPTIONS_UNSUPPORTED|STARTUP_UNSUPPORTED|AUTH_FAILED|TLS_UNTRUSTED|DNS_FAILED|CONNECTION_TIMEOUT|CONNECTION_CLOSED|NETWORK_UNREACHABLE|SCHEMA_MISSING|PERMISSION_DENIED|POOL_EXHAUSTED|QUERY_FAILED|UNKNOWN)$/.test(error?.diagnostic)?error.diagnostic:undefined;
+ console.error('Teacher authentication failed:',code,diagnostic||'');
+ return Response.json({error:message,code,...(diagnostic?{diagnostic}:{})},{status:503,headers:{'Cache-Control':'no-store'}});
 }
 const route=async(request:Request)=>{
  const runtime=env as Record<string,any>;
