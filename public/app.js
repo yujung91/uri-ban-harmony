@@ -1,6 +1,4 @@
 'use strict';
-// Only the independent Vercel HTML includes this marker. Sites keeps its URLs.
-function teacherAuthLinks(html){return document.querySelector('meta[name="harmony-runtime"]')?.content==='vercel'?html.replaceAll('/signin-with-chatgpt','/api/auth/login').replaceAll('/signout-with-chatgpt','/api/auth/logout'):html;}
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tabs=[['home','⌂','우리 반 작업실'],['rules','☷','약속 모으기'],['vote','♡','마음 모아 투표'],['studio','♫','함께 만들기'],['movie','▷','우리 반 뮤직비디오']];
 const modeNames={text:'짧은 문장',draw:'그림',audio:'목소리',rhythm:'리듬',image:'사진',video:'영상'};

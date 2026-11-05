@@ -87,5 +87,7 @@ await call('action',{classId:cid,headers:owner,body:{type:'join-open',value:fals
 await call('join',{body:{code:c.code},status:404});
 await call('action',{classId:cid,headers:ah,body:{type:'propose',kind:'text',text:'닫힌 후 제출'},status:403});
 await call('action',{classId:cid,headers:owner,body:{type:'delete-class'}});
-assert.equal(files.size,0);await call('state',{classId:cid,headers:owner,status:404});
+assert.equal((await call('me',{headers:owner})).classes.some(c=>c.id===cid),false,'archived class hidden from teacher list');
+await call('join',{body:{code:c.code},status:404});
+assert.ok(files.size>0,'archiving class preserves files');assert.ok(JSON.parse(sql.prepare('SELECT project FROM classes WHERE id=?').get(cid).project).archived);await call('state',{classId:cid,headers:owner,status:404});
 console.log('PASS: teacher authorization, anonymous join, moderation privacy, voting phase, concurrent/idempotent votes, media ownership, class isolation, version restore, closing participation, and file/data deletion.');
