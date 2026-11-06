@@ -1,14 +1,7 @@
 # 우리 반 하모니 · 주제로 만드는 우리 반 노래
 
-최신 기능과 동작은 [CLASSROOM_IMPROVEMENTS.md](CLASSROOM_IMPROVEMENTS.md)를 확인하세요. 집 PC에서는 [HOME_PC_PROMPT.md](HOME_PC_PROMPT.md)의 요청문을 복사해 사용하세요. 아래 초기 버전 설명보다 최신 문서가 우선합니다.
+학생들이 글과 그림, 음악을 활용해 함께 창작하는 학급 활동 웹앱입니다. 최신 기능과 동작은 [CLASSROOM_IMPROVEMENTS.md](CLASSROOM_IMPROVEMENTS.md)를 확인하세요.
 
-# 우리 반 하모니 · 그림과 4마디 작곡
-
-집 PC에서 이어서 작업하려면 [HOME_SETUP.md](HOME_SETUP.md)를 먼저 읽으세요. 개발 구조와 운영 연결 정보는 [HANDOFF.md](HANDOFF.md)에 정리했습니다.
-
-2026-11-03 업데이트: 숫자 8자리 참여 코드, 명시적 교사 입장과 연결 계정 표시, 학생 화면 미리보기, 교사·학생용 매뉴얼, 상황 그림 약속 카드, 스펙트럼 색상 선택, 가사·4마디 멜로디·그림 창작, 학생 원본을 보존하는 교사 수정, 마디 기반 음악 영상 구성을 추가했습니다. 새 음성 제출과 녹음 기능은 제거했습니다.
-
-예시 그림은 미리 생성해 `public/assets/rule-atlas.png`에 포함했습니다. 학생 사용 중 AI API 호출은 없으며, 멜로디 네 곡은 코드로 구성한 예시입니다.
 
 ## 새 창작·영상 흐름
 
